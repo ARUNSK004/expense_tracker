@@ -4,20 +4,54 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Daily Expense Tracker</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin:0; background:#f5f6fa; }
-    header { background:#6200ea; color:white; text-align:center; padding:15px; font-size:20px; }
-    .dashboard { display:flex; justify-content:space-around; padding:15px; flex-wrap:wrap; }
-    .card { background:white; padding:15px; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); flex:1; margin:5px; text-align:center; min-width:100px; }
-    .add-btn { position:fixed; bottom:20px; right:20px; background:#6200ea; color:white; border:none; border-radius:50%; width:60px; height:60px; font-size:30px; cursor:pointer; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { border:1px solid #ddd; padding:10px; text-align:center; }
-    th { background:#eee; }
-    .modal { display:none; position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; }
-    .modal-content { background:white; padding:20px; border-radius:10px; width:90%; max-width:400px; }
-    .modal input, .modal select { width:100%; padding:10px; margin:5px 0; }
-    .modal button { background:#6200ea; color:white; padding:10px; border:none; width:100%; margin-top:10px; cursor:pointer; border-radius:8px; }
-  </style>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; background: #f5f6fa; }
+  header { background: #6200ea; color: white; text-align: center; padding: 15px; font-size: 20px; }
+  .dashboard { display: flex; justify-content: space-around; padding: 15px; flex-wrap: wrap; }
+  .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); flex: 1; margin: 5px; text-align: center; min-width: 100px; }
+  .add-btn { position: fixed; bottom: 20px; right: 20px; background: #6200ea; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 30px; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+  th { background: #eee; }
+  
+  /* Scroll for modal content */
+  .modal-content { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 10px; 
+    width: 90%; 
+    max-width: 400px; 
+    max-height: 500px;
+    overflow-y: auto; /* Make content scrollable */
+  }
+
+  /* Scroll for daily expense table */
+  #expenseTable {
+    max-height: 300px; 
+    overflow-y: auto; 
+  }
+
+  .modal { 
+    display: none; 
+    position: fixed; 
+    left: 0; 
+    top: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0, 0, 0, 0.6); 
+    justify-content: center; 
+    align-items: center; 
+  }
+
+  .modal input, .modal select { width: 100%; padding: 10px; margin: 5px 0; }
+  .modal button { background: #6200ea; color: white; padding: 10px; border: none; width: 100%; margin-top: 10px; cursor: pointer; border-radius: 8px; }
+
+  .card select {
+    margin-top: 5px; 
+    padding: 5px; 
+    border-radius: 5px;
+  }
+</style>
 </head>
 <body>
   <header>💰 Daily Expense Tracker</header>
@@ -51,40 +85,40 @@
 
   <button class="add-btn" onclick="openModal()">+</button>
 
-  <!-- Expense Modal -->
-  <div class="modal" id="expenseModal">
-    <div class="modal-content">
-      <h2>Add Expenses</h2>
-      <label>Category</label>
-      <select id="category" onchange="toggleOtherField()">
-        <option>Breakfast</option>
-        <option>Lunch</option>
-        <option>Dinner</option>
-        <option>Snacks</option>
-        <option>Others</option>
-      </select>
-      <input type="text" id="product" placeholder="Enter product (if Others)" style="display:none;">
-      <input type="number" id="amount" placeholder="Enter amount">
-      <label>Payment</label>
-      <select id="payment">
-        <option>GPay</option>
-        <option>Cash</option>
-      </select>
-      <input type="date" id="date" value="">
-      <button onclick="addItem()">➕ Add Item</button>
+<!-- Expense Modal -->
+<div class="modal" id="expenseModal">
+  <div class="modal-content">
+    <h2>Add Expenses</h2>
+    <label>Category</label>
+    <select id="category" onchange="toggleOtherField()">
+      <option>Breakfast</option>
+      <option>Lunch</option>
+      <option>Dinner</option>
+      <option>Snacks</option>
+      <option>Others</option>
+    </select>
+    <input type="text" id="product" placeholder="Enter product (if Others)" style="display:none;">
+    <input type="number" id="amount" placeholder="Enter amount">
+    <label>Payment</label>
+    <select id="payment">
+      <option>GPay</option>
+      <option>Cash</option>
+    </select>
+    <input type="date" id="date" value="">
+    <button onclick="addItem()">➕ Add Item</button>
 
-      <!-- Temporary item list -->
-      <table style="margin-top:10px; width:100%; border-collapse:collapse;" id="tempTable">
-        <thead>
-          <tr><th>Category</th><th>Product</th><th>Amount</th><th>Pay</th><th>Date</th><th>Action</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <!-- Temporary item list -->
+    <table style="margin-top:10px; width:100%; border-collapse:collapse;" id="tempTable">
+      <thead>
+        <tr><th>Category</th><th>Product</th><th>Amount</th><th>Pay</th><th>Date</th><th>Action</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-      <button onclick="submitAll()">✅ Submit All</button>
-      <button onclick="closeModal()" style="background:#aaa;">Cancel</button>
-    </div>
+    <button onclick="submitAll()">✅ Submit All</button>
+    <button onclick="closeModal()" style="background:#aaa;">Cancel</button>
   </div>
+</div>
 
   <!-- Balance Modal -->
   <div class="modal" id="balanceModal">
@@ -98,216 +132,213 @@
   </div>
 
   <script>
-    const apiUrl = "https://script.google.com/macros/s/AKfycbxuRXU7z9sl5CKJoh30h4SITt2IXjK47Pktvz1bHvjuPq4_wEe-Jx2gO4cCsG9eOeIB/exec";
+const apiUrl = "https://script.google.com/macros/s/AKfycbxuRXU7z9sl5CKJoh30h4SITt2IXjK47Pktvz1bHvjuPq4_wEe-Jx2gO4cCsG9eOeIB/exec";
 
-    let expensesData = [];
-    let editingType = "";
-    let tempItems = [];
+let expensesData = [];
+let editingType = "";
+let tempItems = [];
 
-    // ---------- Helpers ----------
-    function toAmount(val) {
-      if (val === null || val === undefined) return 0;
-      const n = parseFloat(String(val).replace(/[^\d.-]/g, ""));
-      return isNaN(n) ? 0 : n;
+// ---------- Helpers ----------
+function toAmount(val) {
+  if (val === null || val === undefined) return 0;
+  const n = parseFloat(String(val).replace(/[^\d.-]/g, ""));
+  return isNaN(n) ? 0 : n;
+}
+
+function toYMD(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function parseDateFlexible(inp) {
+  if (inp === null || inp === undefined) return null;
+  if (typeof inp === "number") {
+    const epoch = new Date(Date.UTC(1899, 11, 30));
+    return new Date(epoch.getTime() + inp * 86400000);
+  }
+  let s = String(inp).trim();
+  if (!s) return null;
+  let d = new Date(s);
+  if (!isNaN(d)) return d;
+  s = s.replace(/\./g, "/").replace(/-/g, "/");
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (m) {
+    let p1 = parseInt(m[1], 10), p2 = parseInt(m[2], 10), p3 = parseInt(m[3], 10);
+    if (p3 < 100) p3 += 2000;
+    let day = p1, month = p2, year = p3;
+    if (p2 > 12 && p1 <= 12) { day = p2; month = p1; }
+    d = new Date(year, month - 1, day);
+    if (!isNaN(d)) return d;
+  }
+  return null;
+}
+
+// ---------- Modal functions ----------
+function openModal() { document.getElementById("expenseModal").style.display = "flex"; }
+function closeModal() { document.getElementById("expenseModal").style.display = "none"; tempItems = []; renderTempTable(); }
+function toggleOtherField() { document.getElementById("product").style.display = (document.getElementById("category").value === "Others") ? "block" : "none"; }
+function editBalance(type) { editingType = type; document.getElementById("balanceType").innerText = "Update " + type + " Balance"; document.getElementById("balanceModal").style.display = "flex"; }
+function closeBalanceModal() { document.getElementById("balanceModal").style.display = "none"; }
+
+// ---------- Add multiple items ----------
+function addItem() {
+  const category = document.getElementById("category").value;
+  const product = document.getElementById("product").value || "-";
+  const amount = document.getElementById("amount").value;
+  const payment = document.getElementById("payment").value;
+  const date = document.getElementById("date").value;
+  if (!amount || !date) { alert("Please enter amount and date"); return; }
+  tempItems.push({ category, product, amount, payment, date });
+  renderTempTable();
+  document.getElementById("amount").value = "";
+  if (category === "Others") document.getElementById("product").value = "";
+}
+
+function renderTempTable() {
+  const tbody = document.querySelector("#tempTable tbody");
+  tbody.innerHTML = "";
+  tempItems.forEach((item, index) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${item.category}</td>
+        <td>${item.product}</td>
+        <td>₹${item.amount}</td>
+        <td>${item.payment}</td>
+        <td>${item.date}</td>
+        <td><button onclick="deleteTempItem(${index})" style="background:red;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">❌</button></td>
+      </tr>
+    `;
+  });
+}
+
+function deleteTempItem(index) { tempItems.splice(index, 1); renderTempTable(); }
+
+// ---------- Submit Items ----------
+async function submitAll() {
+  if (tempItems.length === 0) { alert("No items to submit!"); return; }
+  for (const item of tempItems) {
+    const params = new URLSearchParams();
+    params.append("action", "add");
+    params.append("date", item.date);
+    params.append("category", item.category);
+    params.append("item", item.product);
+    params.append("amount", item.amount);
+    params.append("paymentMode", item.payment);
+    await fetch(apiUrl, { method: "POST", body: params });
+  }
+  alert("✅ Items saved to Google Sheets!");
+  tempItems = []; renderTempTable(); closeModal(); loadData();
+}
+
+// ---------- Load Data ----------
+async function loadData() {
+  let params = new URLSearchParams();
+  params.append("action", "getExpenses");
+  const res = await fetch(apiUrl, { method: "POST", body: params });
+  let raw = await res.json();
+  expensesData = raw.map(r => {
+    const d = parseDateFlexible(r.Date ?? r.date ?? r.TransactionDate ?? r["Transaction Date"]);
+    return {
+      Date: d ? toYMD(d) : (r.Date || r.date || ""),
+      _date: d || null,
+      Amount: toAmount(r.Amount ?? r.amount)
+    };
+  });
+
+  params = new URLSearchParams();
+  params.append("action", "getBalance");
+  const balRes = await fetch(apiUrl, { method: "POST", body: params });
+  const balances = await balRes.json();
+  calculateTotal("all");
+  fillDailySummary(expensesData, "all");
+  document.getElementById("balanceGPay").innerText = "₹" + (balances.GPay ?? 0);
+  document.getElementById("balanceCash").innerText = "₹" + (balances.Cash ?? 0);
+}
+
+// ---------- Filtering ----------
+function calculateTotal(filterType) {
+  const today = new Date();
+  const startOfWeek = new Date(today); startOfWeek.setDate(today.getDate() - today.getDay()); startOfWeek.setHours(0,0,0,0);
+  const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6); endOfWeek.setHours(23,59,59,999);
+  let total = 0;
+  for (const e of expensesData) {
+    const amt = toAmount(e.Amount);
+    const d = e._date;
+    if (filterType === "all") total += amt;
+    else if (d instanceof Date && !isNaN(d)) {
+      if (filterType === "month" && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()) total += amt;
+      else if (filterType === "week" && d >= startOfWeek && d <= endOfWeek) total += amt;
     }
+  }
+  document.getElementById("totalExpense").innerText = "₹" + total.toFixed(2);
+}
 
-    function toYMD(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
+function applyFilter() {
+  const filterType = document.getElementById("filter").value;
+  calculateTotal(filterType);  // Update total expense for the selected filter
+  fillDailySummary(expensesData, filterType);  // Update the daily expense table for the selected filter
+}
 
-    function parseDateFlexible(inp) {
-      if (inp === null || inp === undefined) return null;
-      if (typeof inp === "number") {
-        const epoch = new Date(Date.UTC(1899, 11, 30));
-        return new Date(epoch.getTime() + inp * 86400000);
-      }
-      let s = String(inp).trim();
-      if (!s) return null;
-      let d = new Date(s);
-      if (!isNaN(d)) return d;
-      s = s.replace(/\./g, "/").replace(/-/g, "/");
-      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-      if (m) {
-        let p1 = parseInt(m[1], 10), p2 = parseInt(m[2], 10), p3 = parseInt(m[3], 10);
-        if (p3 < 100) p3 += 2000;
-        let day = p1, month = p2, year = p3;
-        if (p2 > 12 && p1 <= 12) { day = p2; month = p1; }
-        d = new Date(year, month - 1, day);
-        if (!isNaN(d)) return d;
-      }
-      return null;
-    }
+// ---------- Fill Daily Summary with Filtering ----------
+function fillDailySummary(expenses, filterType) {
+  const today = new Date();
+  const startOfWeek = new Date(today); 
+  startOfWeek.setDate(today.getDate() - today.getDay()); 
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek); 
+  endOfWeek.setDate(startOfWeek.getDate() + 6); 
+  endOfWeek.setHours(23, 59, 59, 999);
 
-    // ---------- Modal functions ----------
-    function openModal() { document.getElementById("expenseModal").style.display = "flex"; }
-    function closeModal() { document.getElementById("expenseModal").style.display = "none"; tempItems = []; renderTempTable(); }
-    function toggleOtherField() { document.getElementById("product").style.display = (document.getElementById("category").value === "Others") ? "block" : "none"; }
-    function editBalance(type) { editingType = type; document.getElementById("balanceType").innerText = "Update " + type + " Balance"; document.getElementById("balanceModal").style.display = "flex"; }
-    function closeBalanceModal() { document.getElementById("balanceModal").style.display = "none"; }
+  const dailyTotals = {};
+  
+  // Filter data based on the selected filter type
+  expenses.forEach((e) => {
+    if (!e.Date) return;
 
-    // ---------- Add multiple items ----------
-    function addItem() {
-      const category = document.getElementById("category").value;
-      const product = document.getElementById("product").value || "-";
-      const amount = document.getElementById("amount").value;
-      const payment = document.getElementById("payment").value;
-      const date = document.getElementById("date").value;
-      if (!amount || !date) { alert("Please enter amount and date"); return; }
-      tempItems.push({ category, product, amount, payment, date });
-      renderTempTable();
-      document.getElementById("amount").value = "";
-      if (category === "Others") document.getElementById("product").value = "";
-    }
+    const expenseDate = new Date(e.Date);
+    let includeExpense = false;
 
-    function renderTempTable() {
-      const tbody = document.querySelector("#tempTable tbody");
-      tbody.innerHTML = "";
-      tempItems.forEach((item, index) => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${item.category}</td>
-            <td>${item.product}</td>
-            <td>₹${item.amount}</td>
-            <td>${item.payment}</td>
-            <td>${item.date}</td>
-            <td><button onclick="deleteTempItem(${index})" style="background:red;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">❌</button></td>
-          </tr>
-        `;
-      });
-    }
-
-    function deleteTempItem(index) { tempItems.splice(index, 1); renderTempTable(); }
-
-    // ---------- Submit Items ----------
-    async function submitAll() {
-      if (tempItems.length === 0) { alert("No items to submit!"); return; }
-      for (const item of tempItems) {
-        const params = new URLSearchParams();
-        params.append("action", "add");
-        params.append("date", item.date);
-        params.append("category", item.category);
-        params.append("item", item.product);
-        params.append("amount", item.amount);
-        params.append("paymentMode", item.payment);
-        await fetch(apiUrl, { method: "POST", body: params });
-      }
-      alert("✅ Items saved to Google Sheets!");
-      tempItems = []; renderTempTable(); closeModal(); loadData();
-    }
-
-    // ---------- Load Data ----------
-    async function loadData() {
-      let params = new URLSearchParams();
-      params.append("action", "getExpenses");
-      const res = await fetch(apiUrl, { method: "POST", body: params });
-      let raw = await res.json();
-      expensesData = raw.map(r => {
-        const d = parseDateFlexible(r.Date ?? r.date ?? r.TransactionDate ?? r["Transaction Date"]);
-        return {
-          Date: d ? toYMD(d) : (r.Date || r.date || ""),
-          _date: d || null,
-          Amount: toAmount(r.Amount ?? r.amount)
-        };
-      });
-      params = new URLSearchParams();
-      params.append("action", "getBalance");
-      const balRes = await fetch(apiUrl, { method: "POST", body: params });
-      const balances = await balRes.json();
-      calculateTotal("all");
-      fillDailySummary(expensesData);
-      document.getElementById("balanceGPay").innerText = "₹" + (balances.GPay ?? 0);
-      document.getElementById("balanceCash").innerText = "₹" + (balances.Cash ?? 0);
-    }
-
-    // ---------- Filtering ----------
-    function calculateTotal(filterType) {
-      const today = new Date();
-      const startOfWeek = new Date(today); startOfWeek.setDate(today.getDate() - today.getDay()); startOfWeek.setHours(0,0,0,0);
-      const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6); endOfWeek.setHours(23,59,59,999);
-      let total = 0;
-      for (const e of expensesData) {
-        const amt = toAmount(e.Amount);
-        const d = e._date;
-        if (filterType === "all") total += amt;
-        else if (d instanceof Date && !isNaN(d)) {
-          if (filterType === "month" && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()) total += amt;
-          else if (filterType === "week" && d >= startOfWeek && d <= endOfWeek) total += amt;
-        }
-      }
-      document.getElementById("totalExpense").innerText = "₹" + total.toFixed(2);
-    }
-
-    function applyFilter() { calculateTotal(document.getElementById("filter").value); }
-
-    // ---------- Daily Summary ----------
-    function fillDailySummary(expenses) {
-      const dailyTotals = {};
-      for (const e of expenses) {
-        if (!e.Date) continue;
-        if (!dailyTotals[e.Date]) dailyTotals[e.Date] = 0;
-        dailyTotals[e.Date] += toAmount(e.Amount);
-      }
-      const table = document.getElementById("expenseTable");
-      table.innerHTML = "";
-      Object.keys(dailyTotals).sort().forEach(d => {
-        table.innerHTML += `<tr><td>${d}</td><td>₹${dailyTotals[d].toFixed(2)}</td></tr>`;
-      });
-    }
-
-    // ---------- Save Balance (robust + debug) ----------
-    async function saveBalance() {
-      const newBalance = document.getElementById("newBalance").value;
-      if (!newBalance) { alert("Enter a balance"); return; }
-
-      // Build a params object with many possible key names (to match whatever the server expects)
-      const payload = {
-        action: "updateBalance",
-        action_alt: "update_balance",
-        type: editingType,
-        paymentMode: editingType,
-        account: editingType,
-        wallet: editingType,
-        balance: newBalance,
-        newBalance: newBalance,
-        amount: newBalance,
-        value: newBalance
-      };
-
-      const params = new URLSearchParams();
-      for (const k in payload) params.append(k, payload[k]);
-
-      console.log("Sending updateBalance request to:", apiUrl);
-      console.log("Request body:", params.toString());
-
-      try {
-        const res = await fetch(apiUrl, { method: "POST", body: params });
-        const text = await res.text();
-        console.log("Response status:", res.status);
-        console.log("Response text:", text);
-
-        // heuristics: treat 200 + 'ok'/'success' in body as success
-        const okish = res.ok && /ok|success|updated|saved|true/i.test(text);
-        if (okish) {
-          alert("✅ Balance updated!");
-          closeBalanceModal();
-          loadData();
-        } else {
-          // still reload data (in case server updated but didn't send a friendly response)
-          alert("Server response: " + (text || res.status) + "\nCheck console & Apps Script logs for details.");
-          closeBalanceModal();
-          loadData();
-        }
-      } catch (err) {
-        console.error("Network / fetch error:", err);
-        alert("Network error when updating balance. See console for details.");
+    // Filter by Week
+    if (filterType === 'week') {
+      if (expenseDate >= startOfWeek && expenseDate <= endOfWeek) {
+        includeExpense = true;
       }
     }
+    // Filter by Month
+    else if (filterType === 'month') {
+      if (expenseDate.getMonth() === today.getMonth() && expenseDate.getFullYear() === today.getFullYear()) {
+        includeExpense = true;
+      }
+    }
+    // For "All Time" filter (No filtering needed)
+    else if (filterType === 'all') {
+      includeExpense = true;
+    }
 
-    document.getElementById("date").value = new Date().toISOString().split("T")[0];
-    window.addEventListener("DOMContentLoaded", loadData);
+    if (includeExpense) {
+      if (!dailyTotals[e.Date]) dailyTotals[e.Date] = 0;
+      dailyTotals[e.Date] += toAmount(e.Amount);
+    }
+  });
+
+  const table = document.getElementById("expenseTable");
+  table.innerHTML = ""; // Clear the existing table content
+  
+  Object.keys(dailyTotals).sort().forEach((d) => {
+    // Format the date to dd-mm-yyyy
+    const dateParts = d.split('-');
+    const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;  // Convert yyyy-mm-dd to dd-mm-yyyy
+
+    table.innerHTML += `<tr><td>${formattedDate}</td><td>₹${dailyTotals[d].toFixed(2)}</td></tr>`;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadData(); // Initialize data when the page loads
+});
+
   </script>
 </body>
 </html>
