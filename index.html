@@ -7,7 +7,7 @@
 <style>
 body{font-family:Arial;margin:0;background:#f5f6fa}
 header{background:#6200ea;color:#fff;padding:15px;text-align:center}
-.dashboard{display:flex;gap:10px;padding:10px}
+.dashboard{display:flex;gap:10px;padding:10px;flex-wrap:wrap}
 .card{background:#fff;flex:1;padding:10px;border-radius:10px;text-align:center}
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
@@ -39,26 +39,28 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer}
   </div>
 
   <div class="card">
-    <h3>GPay ✏️</h3>
+    <h3>GPay</h3>
     <p id="balanceGPay">₹0</p>
     <button onclick="editBalance('GPay')">Edit</button>
   </div>
 
   <div class="card">
-    <h3>Cash ✏️</h3>
+    <h3>Cash</h3>
     <p id="balanceCash">₹0</p>
     <button onclick="editBalance('Cash')">Edit</button>
   </div>
 </div>
 
 <table>
-<thead><tr><th>Date</th><th>Total</th></tr></thead>
+<thead>
+<tr><th>Date</th><th>Total</th></tr>
+</thead>
 <tbody id="expenseTable"></tbody>
 </table>
 
 <button class="add-btn" onclick="openModal()">+</button>
 
-<!-- ADD EXPENSE -->
+<!-- ADD EXPENSE MODAL -->
 <div class="modal" id="expenseModal">
 <div class="modal-content">
 <h3>Add Expense</h3>
@@ -88,7 +90,7 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 </div>
 
-<!-- DATE DETAIL -->
+<!-- DAY DETAILS -->
 <div class="modal" id="detailModal">
 <div class="modal-content">
 <h3 id="detailDate"></h3>
@@ -100,7 +102,7 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 </div>
 
-<!-- BALANCE -->
+<!-- BALANCE MODAL -->
 <div class="modal" id="balanceModal">
 <div class="modal-content">
 <h3 id="balanceType"></h3>
@@ -111,103 +113,126 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <script>
-const apiUrl="https://script.google.com/macros/s/AKfycbxG5iEm88BYbY44RE4IRffi0-I0uADDfAYN0jpEOPPpByvLL4eWflUVKyLAolRmWDTg/exec";
-let expenses=[],temp=[],editType="";
+const apiUrl = "https://script.google.com/macros/s/AKfycbyWzBULGTnBqblwX3mJrY5iA9ds0SAKsluE4kjUNPmoVcbYRKNJKEOoJJywnMme-3eD/exec";
+let expenses=[], temp=[], editType="";
 
-const f = (d) => {
-  const [y, m, day] = d.split("-");
-  return `${day}-${m}-${y}`; // UI only
+const formatDate = d => {
+  const [y,m,day] = d.split("-");
+  return `${day}-${m}-${y}`;
 };
-const ymd = d => d;
 
-
-document.getElementById("filter").onchange=render;
+document.getElementById("filter").onchange = render;
 
 async function load(){
-  const r=await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"getAll"})});
-  const d=await r.json();
-  expenses=d.expenses;
+  const r = await fetch(apiUrl,{
+    method:"POST",
+    body:new URLSearchParams({action:"getAll"})
+  });
+  const d = await r.json();
+  expenses = d.expenses;
   balanceGPay.innerText="₹"+d.gpay;
   balanceCash.innerText="₹"+d.cash;
   render();
 }
 
 function render(){
-  let m = {}, t = 0;
+  let map={}, total=0;
   let now = new Date();
   let filt = filter.value;
 
-  expenses.forEach(e => {
-    let d = new Date(e.Date + "T00:00:00"); // ✅ FIXED
+  expenses.forEach(e=>{
+    const d = e.Date; // STRING yyyy-mm-dd
 
-    if (filt === "month" &&
-        (d.getMonth() !== now.getMonth() ||
-         d.getFullYear() !== now.getFullYear())) return;
-
-    if (filt === "week") {
-      let w = new Date();
-      w.setDate(w.getDate() - w.getDay());
-      w.setHours(0,0,0,0);
-      if (d < w) return;
+    if(filt==="month"){
+      if(d.slice(0,7)!==now.toISOString().slice(0,7)) return;
+    }
+    if(filt==="week"){
+      const today = now.toISOString().slice(0,10);
+      if(d < today) return;
     }
 
-    let key = e.Date; // ✅ STRING DATE
-    m[key] = (m[key] || 0) + e.Amount;
-    t += e.Amount;
+    map[d]=(map[d]||0)+e.Amount;
+    total+=e.Amount;
   });
 
-  totalExpense.innerText = "₹" + t;
+  totalExpense.innerText="₹"+total;
 
-  expenseTable.innerHTML = Object.keys(m)
-    .sort((a, b) => b.localeCompare(a)) // ✅ DESC (31,30,29)
-    .map(d =>
-      `<tr onclick="openDay('${d}')">
-        <td>${f(d)}</td>
-        <td>₹${m[d]}</td>
-      </tr>`
-    ).join("");
+  expenseTable.innerHTML = Object.keys(map)
+    .sort((a,b)=>b.localeCompare(a))   // ✅ DESCENDING
+    .map(d=>`
+      <tr onclick="openDay('${d}')">
+        <td>${formatDate(d)}</td>
+        <td>₹${map[d]}</td>
+      </tr>`).join("");
 }
-
 
 function openDay(d){
-  detailDate.innerText = f(d);
+  detailDate.innerText = formatDate(d);
   detailBody.innerHTML = expenses
-    .filter(e => e.Date === d)
-    .map(e =>
-      `<tr>
-        <td>${e.Category === "Others" ? e.Item : e.Category}</td>
+    .filter(e=>e.Date===d)
+    .map(e=>`
+      <tr>
+        <td>${e.Category==="Others"?e.Item:e.Category}</td>
         <td>₹${e.Amount}</td>
         <td>${e.PaymentMode}</td>
-      </tr>`
-    ).join("");
-
-  detailModal.style.display = "flex";
+      </tr>`).join("");
+  detailModal.style.display="flex";
 }
-
 
 function openModal(){expenseModal.style.display="flex"}
 function closeModal(){expenseModal.style.display="none";temp=[];drawTemp()}
 function toggleOtherField(){product.style.display=category.value==="Others"?"block":"none"}
 
 function addItem(){
-  if(!amount.value||!date.value)return alert("Required");
-  temp.push({category:category.value,item:product.value||"-",amount:amount.value,payment:payment.value,date:date.value});
+  if(!amount.value||!date.value) return alert("Required");
+  temp.push({
+    category:category.value,
+    item:product.value||"-",
+    amount:Number(amount.value),
+    payment:payment.value,
+    date:date.value
+  });
   drawTemp();
 }
+
 function drawTemp(){
-  tempBody.innerHTML=temp.map((i,x)=>`<tr><td>${i.category}</td><td>${i.item}</td><td>${i.amount}</td><td>${i.payment}</td><td><button onclick="temp.splice(${x},1);drawTemp()">❌</button></td></tr>`).join("");
+  tempBody.innerHTML=temp.map((i,x)=>`
+    <tr>
+      <td>${i.category}</td>
+      <td>${i.item}</td>
+      <td>${i.amount}</td>
+      <td>${i.payment}</td>
+      <td><button onclick="temp.splice(${x},1);drawTemp()">❌</button></td>
+    </tr>`).join("");
 }
+
 async function submitAll(){
   for(let i of temp){
-    await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"add",...i})});
+    await fetch(apiUrl,{
+      method:"POST",
+      body:new URLSearchParams({action:"add",...i})
+    });
   }
   closeModal(); load();
 }
 
-function editBalance(t){editType=t;balanceType.innerText="Update "+t;balanceModal.style.display="flex"}
+function editBalance(t){
+  editType=t;
+  balanceType.innerText="Update "+t;
+  balanceModal.style.display="flex";
+}
+
 async function saveBalance(){
-  await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"updateBalance",type:editType,value:newBalance.value})});
-  balanceModal.style.display="none"; load();
+  await fetch(apiUrl,{
+    method:"POST",
+    body:new URLSearchParams({
+      action:"updateBalance",
+      type:editType,
+      value:newBalance.value
+    })
+  });
+  balanceModal.style.display="none";
+  load();
 }
 
 load();
