@@ -86,71 +86,161 @@ button { padding:8px; border:none; border-radius:6px; cursor:pointer; }
 </div>
 
 <script>
-const api = "https://script.google.com/macros/s/AKfycbylcrgIjAzMEYJx3QamTK6gspIU9_RMjtXjupjd9cFEI4gV4PAnwVOPbLadl8__bog_/exec";
+const apiUrl = "https://script.google.com/macros/s/AKfycbwhIHO0XoXiEdkp2bplU6zGjN4VCMWKBr8ERpZc404pke9cKJ7v1iBre5LVU66mGDYi/exec";
 
-let expenses=[], editType="";
+let expensesData = [];
+let tempItems = [];
+let editingType = "";
 
-document.getElementById("filter").onchange = render;
-
-async function load() {
-  const r = await fetch(api,{method:"POST",body:new URLSearchParams({action:"getAll"})});
-  const data = await r.json();
-  expenses = data.expenses;
-
-  document.getElementById("gpay").innerText = "₹"+data.gpay;
-  document.getElementById("cash").innerText = "₹"+data.cash;
-
-  render();
+/* ---------- DATE HELPERS ---------- */
+function formatDateDisplay(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yy = d.getFullYear();
+  return `${dd}-${mm}-${yy}`;
+}
+function formatYMD(dateStr){
+  return new Date(dateStr).toISOString().split("T")[0];
 }
 
-function render(){
-  const f = document.getElementById("filter").value;
-  let map={}, total=0, now=new Date();
+/* ---------- LOAD DATA ---------- */
+async function loadData(){
+  const res = await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"getAll"})});
+  const data = await res.json();
 
-  expenses.forEach(e=>{
-    let d=new Date(e.Date);
-    if(f==="month" && (d.getMonth()!=now.getMonth()||d.getFullYear()!=now.getFullYear())) return;
-    if(f==="week"){
-      let w=new Date(); w.setDate(w.getDate()-w.getDay());
+  expensesData = data.expenses;
+
+  document.getElementById("balanceGPay").innerText = "₹"+data.gpay;
+  document.getElementById("balanceCash").innerText = "₹"+data.cash;
+
+  document.getElementById("filter").value="month";
+  applyFilter();
+}
+
+/* ---------- FILTER ---------- */
+function applyFilter(){
+  const filter = document.getElementById("filter").value;
+  const today = new Date();
+  let map={}, total=0;
+
+  expensesData.forEach(e=>{
+    const d = new Date(e.Date);
+    if(filter==="month" && (d.getMonth()!=today.getMonth() || d.getFullYear()!=today.getFullYear())) return;
+    if(filter==="week"){
+      const w = new Date(); w.setDate(w.getDate()-w.getDay());
       if(d<w) return;
     }
-    map[e.Date]=(map[e.Date]||0)+e.Amount;
-    total+=e.Amount;
+    const key = formatYMD(e.Date);
+    map[key] = (map[key]||0)+Number(e.Amount);
+    total+=Number(e.Amount);
   });
 
-  document.getElementById("total").innerText="₹"+total;
+  document.getElementById("totalExpense").innerText="₹"+total.toFixed(2);
 
-  let tb=document.getElementById("dateTable"); tb.innerHTML="";
-  Object.keys(map).sort().forEach(d=>{
-    tb.innerHTML+=`<tr onclick="openDetail('${d}')"><td>${d}</td><td>₹${map[d]}</td></tr>`;
-  });
+  renderDateTable(map);
 }
 
-function openDetail(date){
-  document.getElementById("detailDate").innerText=date;
-  let b=document.getElementById("detailBody"); b.innerHTML="";
-  expenses.filter(e=>e.Date===date).forEach(e=>{
-    let cat=e.Category==="Others"?e.Item:e.Category;
-    b.innerHTML+=`<tr><td>${cat}</td><td>₹${e.Amount}</td><td>${e.PaymentMode}</td></tr>`;
-  });
+/* ---------- DATE TABLE (DESC ORDER) ---------- */
+function renderDateTable(map){
+  const tbody = document.getElementById("expenseTable");
+  tbody.innerHTML="";
+
+  Object.keys(map)
+    .sort((a,b)=> new Date(b)-new Date(a))   // DESC
+    .forEach(d=>{
+      tbody.innerHTML+=`
+        <tr onclick="openDayDetail('${d}')">
+          <td>${formatDateDisplay(d)}</td>
+          <td>₹${map[d].toFixed(2)}</td>
+        </tr>`;
+    });
+}
+
+/* ---------- DATE DETAIL ---------- */
+function openDayDetail(date){
+  document.getElementById("detailDate").innerText=formatDateDisplay(date);
+  const body=document.getElementById("detailBody");
+  body.innerHTML="";
+
+  expensesData
+    .filter(e=>formatYMD(e.Date)===date)
+    .forEach(e=>{
+      const cat = e.Category==="Others" ? e.Item : e.Category;
+      body.innerHTML+=`
+        <tr>
+          <td>${cat}</td>
+          <td>₹${e.Amount}</td>
+          <td>${e.PaymentMode}</td>
+        </tr>`;
+    });
+
   document.getElementById("detailModal").style.display="flex";
 }
 function closeDetail(){detailModal.style.display="none";}
 
-function editBalance(t){
-  editType=t;
-  balTitle.innerText="Update "+t;
-  balanceModal.style.display="flex";
+/* ---------- ADD EXPENSE (UNCHANGED) ---------- */
+function openModal(){expenseModal.style.display="flex";}
+function closeModal(){expenseModal.style.display="none"; tempItems=[]; renderTemp();}
+function toggleOtherField(){
+  product.style.display = category.value==="Others"?"block":"none";
 }
-function closeBal(){balanceModal.style.display="none";}
-async function saveBalance(){
-  await fetch(api,{method:"POST",body:new URLSearchParams({
-    action:"updateBalance", type:editType, value:balInput.value
-  })});
-  closeBal(); load();
+function addItem(){
+  if(!amount.value||!date.value) return alert("Amount & date required");
+  tempItems.push({
+    category:category.value,
+    item:product.value||"-",
+    amount:amount.value,
+    payment:payment.value,
+    date:date.value
+  });
+  renderTemp();
+}
+function renderTemp(){
+  tempTable.querySelector("tbody").innerHTML=tempItems.map((i,idx)=>`
+    <tr>
+      <td>${i.category}</td>
+      <td>${i.item}</td>
+      <td>₹${i.amount}</td>
+      <td>${i.payment}</td>
+      <td>${i.date}</td>
+      <td><button onclick="tempItems.splice(${idx},1);renderTemp()">❌</button></td>
+    </tr>`).join("");
+}
+async function submitAll(){
+  for(const i of tempItems){
+    await fetch(apiUrl,{method:"POST",body:new URLSearchParams({
+      action:"add",
+      date:i.date,
+      category:i.category,
+      item:i.item,
+      amount:i.amount,
+      paymentMode:i.payment
+    })});
+  }
+  closeModal(); loadData();
 }
 
-load();
+/* ---------- BALANCE ---------- */
+function editBalance(t){
+  editingType=t;
+  balanceType.innerText="Update "+t;
+  balanceModal.style.display="flex";
+}
+async function saveBalance(){
+  await fetch(apiUrl,{method:"POST",body:new URLSearchParams({
+    action:"updateBalance",
+    type:editingType,
+    value:newBalance.value
+  })});
+  balanceModal.style.display="none";
+  loadData();
+}
+function closeBalanceModal(){balanceModal.style.display="none";}
+
+document.addEventListener("DOMContentLoaded",loadData);
 </script>
+
 </body>
 </html>
