@@ -31,8 +31,8 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer}
   <div class="card">
     <h3>Total</h3>
     <select id="filter">
-      <option value="month">This Month</option>
-      <option value="week">This Week</option>
+      <option value="month">Month</option>
+      <option value="week">Week</option>
       <option value="all">All Time</option>
     </select>
     <p id="totalExpense">₹0</p>
@@ -111,7 +111,7 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer}
 </div>
 
 <script>
-const apiUrl="https://script.google.com/macros/s/AKfycbz2EI_tYtO3J4VUeP_U3HszjE-F4ZlcPwqO93V_RGF9ny4IGldvITdqcBGMgivm2lzN/exec";
+const apiUrl="https://script.google.com/macros/s/AKfycbxG5iEm88BYbY44RE4IRffi0-I0uADDfAYN0jpEOPPpByvLL4eWflUVKyLAolRmWDTg/exec";
 let expenses=[],temp=[],editType="";
 
 const f=(d)=>{d=new Date(d);return `${d.getDate().toString().padStart(2,'0')}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getFullYear()}`;}
