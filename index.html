@@ -116,9 +116,10 @@ let expenses=[],temp=[],editType="";
 
 const f = (d) => {
   const [y, m, day] = d.split("-");
-  return `${day}-${m}-${y}`;
+  return `${day}-${m}-${y}`; // UI only
 };
-const ymd=d=>new Date(d).toISOString().split("T")[0];
+const ymd = d => d;
+
 
 document.getElementById("filter").onchange=render;
 
@@ -132,25 +133,57 @@ async function load(){
 }
 
 function render(){
-  let m={},t=0,n=new Date(),filt=filter.value;
-  expenses.forEach(e=>{
-    let d=new Date(e.Date);
-    if(filt==="month"&&(d.getMonth()!=n.getMonth()||d.getFullYear()!=n.getFullYear()))return;
-    if(filt==="week"){let w=new Date();w.setDate(w.getDate()-w.getDay());if(d<w)return;}
-    let k=ymd(e.Date);
-    m[k]=(m[k]||0)+e.Amount; t+=e.Amount;
+  let m = {}, t = 0;
+  let now = new Date();
+  let filt = filter.value;
+
+  expenses.forEach(e => {
+    let d = new Date(e.Date + "T00:00:00"); // ✅ FIXED
+
+    if (filt === "month" &&
+        (d.getMonth() !== now.getMonth() ||
+         d.getFullYear() !== now.getFullYear())) return;
+
+    if (filt === "week") {
+      let w = new Date();
+      w.setDate(w.getDate() - w.getDay());
+      w.setHours(0,0,0,0);
+      if (d < w) return;
+    }
+
+    let key = e.Date; // ✅ STRING DATE
+    m[key] = (m[key] || 0) + e.Amount;
+    t += e.Amount;
   });
-  totalExpense.innerText="₹"+t;
-  expenseTable.innerHTML=Object.keys(m).sort((a,b)=>new Date(b)-new Date(a))
-    .map(d=>`<tr onclick="openDay('${d}')"><td>${f(d)}</td><td>₹${m[d]}</td></tr>`).join("");
+
+  totalExpense.innerText = "₹" + t;
+
+  expenseTable.innerHTML = Object.keys(m)
+    .sort((a, b) => b.localeCompare(a)) // ✅ DESC (31,30,29)
+    .map(d =>
+      `<tr onclick="openDay('${d}')">
+        <td>${f(d)}</td>
+        <td>₹${m[d]}</td>
+      </tr>`
+    ).join("");
 }
 
+
 function openDay(d){
-  detailDate.innerText=f(d);
-  detailBody.innerHTML=expenses.filter(e=>ymd(e.Date)===d)
-    .map(e=>`<tr><td>${e.Category==="Others"?e.Item:e.Category}</td><td>₹${e.Amount}</td><td>${e.PaymentMode}</td></tr>`).join("");
-  detailModal.style.display="flex";
+  detailDate.innerText = f(d);
+  detailBody.innerHTML = expenses
+    .filter(e => e.Date === d)
+    .map(e =>
+      `<tr>
+        <td>${e.Category === "Others" ? e.Item : e.Category}</td>
+        <td>₹${e.Amount}</td>
+        <td>${e.PaymentMode}</td>
+      </tr>`
+    ).join("");
+
+  detailModal.style.display = "flex";
 }
+
 
 function openModal(){expenseModal.style.display="flex"}
 function closeModal(){expenseModal.style.display="none";temp=[];drawTemp()}
