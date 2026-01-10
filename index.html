@@ -2,28 +2,25 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Expense Tracker</title>
+<title>Daily Expense Tracker</title>
 
 <style>
-body { font-family: Arial; margin:0; background:#f5f6fa; }
-header { background:#6200ea; color:white; padding:15px; text-align:center; }
-.dashboard { display:flex; gap:10px; padding:10px; }
-.card { background:white; flex:1; padding:10px; border-radius:10px; text-align:center; }
-table { width:100%; border-collapse:collapse; margin-top:10px; }
-th,td { border:1px solid #ddd; padding:8px; text-align:center; }
-th { background:#eee; }
+body{font-family:Arial;margin:0;background:#f5f6fa}
+header{background:#6200ea;color:#fff;padding:15px;text-align:center}
+.dashboard{display:flex;gap:10px;padding:10px}
+.card{background:#fff;flex:1;padding:10px;border-radius:10px;text-align:center}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#eee}
+.add-btn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;
+border-radius:50%;font-size:30px;border:none;background:#6200ea;color:#fff}
 
-.modal {
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,.6);
-  justify-content:center; align-items:center;
-}
-.modal-content {
-  background:white; width:90%; max-width:400px;
-  max-height:80%; overflow:auto;
-  padding:15px; border-radius:10px;
-}
-button { padding:8px; border:none; border-radius:6px; cursor:pointer; }
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+justify-content:center;align-items:center}
+.modal-content{background:#fff;width:90%;max-width:400px;
+max-height:85%;overflow:auto;padding:15px;border-radius:10px}
+input,select{width:100%;padding:8px;margin:5px 0}
+button{padding:8px;border:none;border-radius:6px;cursor:pointer}
 </style>
 </head>
 
@@ -38,209 +35,146 @@ button { padding:8px; border:none; border-radius:6px; cursor:pointer; }
       <option value="week">This Week</option>
       <option value="all">All Time</option>
     </select>
-    <p id="total">₹0</p>
+    <p id="totalExpense">₹0</p>
   </div>
 
   <div class="card">
     <h3>GPay ✏️</h3>
-    <p id="gpay">₹0</p>
+    <p id="balanceGPay">₹0</p>
     <button onclick="editBalance('GPay')">Edit</button>
   </div>
 
   <div class="card">
     <h3>Cash ✏️</h3>
-    <p id="cash">₹0</p>
+    <p id="balanceCash">₹0</p>
     <button onclick="editBalance('Cash')">Edit</button>
   </div>
 </div>
 
 <table>
-<thead>
-<tr><th>Date</th><th>Total</th></tr>
-</thead>
-<tbody id="dateTable"></tbody>
+<thead><tr><th>Date</th><th>Total</th></tr></thead>
+<tbody id="expenseTable"></tbody>
 </table>
 
-<!-- DATE DETAILS -->
+<button class="add-btn" onclick="openModal()">+</button>
+
+<!-- ADD EXPENSE -->
+<div class="modal" id="expenseModal">
+<div class="modal-content">
+<h3>Add Expense</h3>
+
+<select id="category" onchange="toggleOtherField()">
+<option>Breakfast</option>
+<option>Lunch</option>
+<option>Dinner</option>
+<option>Snacks</option>
+<option>Others</option>
+</select>
+
+<input id="product" placeholder="Item name" style="display:none">
+<input id="amount" type="number" placeholder="Amount">
+<select id="payment"><option>GPay</option><option>Cash</option></select>
+<input id="date" type="date">
+
+<button onclick="addItem()">Add Item</button>
+
+<table>
+<thead><tr><th>Cat</th><th>Item</th><th>Amt</th><th>Pay</th><th></th></tr></thead>
+<tbody id="tempBody"></tbody>
+</table>
+
+<button onclick="submitAll()">Submit All</button>
+<button onclick="closeModal()">Cancel</button>
+</div>
+</div>
+
+<!-- DATE DETAIL -->
 <div class="modal" id="detailModal">
 <div class="modal-content">
 <h3 id="detailDate"></h3>
 <table>
-<thead>
-<tr><th>Category</th><th>Amount</th><th>Pay</th></tr>
-</thead>
+<thead><tr><th>Category</th><th>Amount</th><th>Pay</th></tr></thead>
 <tbody id="detailBody"></tbody>
 </table>
-<button onclick="closeDetail()">Close</button>
+<button onclick="detailModal.style.display='none'">Close</button>
 </div>
 </div>
 
-<!-- BALANCE MODAL -->
+<!-- BALANCE -->
 <div class="modal" id="balanceModal">
 <div class="modal-content">
-<h3 id="balTitle"></h3>
-<input type="number" id="balInput" placeholder="Enter balance">
+<h3 id="balanceType"></h3>
+<input id="newBalance" type="number">
 <button onclick="saveBalance()">Save</button>
-<button onclick="closeBal()">Cancel</button>
+<button onclick="balanceModal.style.display='none'">Cancel</button>
 </div>
 </div>
 
 <script>
-const apiUrl = "https://script.google.com/macros/s/AKfycbwhIHO0XoXiEdkp2bplU6zGjN4VCMWKBr8ERpZc404pke9cKJ7v1iBre5LVU66mGDYi/exec";
+const apiUrl="https://script.google.com/macros/s/AKfycbz2EI_tYtO3J4VUeP_U3HszjE-F4ZlcPwqO93V_RGF9ny4IGldvITdqcBGMgivm2lzN/exec";
+let expenses=[],temp=[],editType="";
 
-let expensesData = [];
-let tempItems = [];
-let editingType = "";
+const f=(d)=>{d=new Date(d);return `${d.getDate().toString().padStart(2,'0')}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getFullYear()}`;}
+const ymd=d=>new Date(d).toISOString().split("T")[0];
 
-/* ---------- DATE HELPERS ---------- */
-function formatDateDisplay(dateStr) {
-  const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const yy = d.getFullYear();
-  return `${dd}-${mm}-${yy}`;
-}
-function formatYMD(dateStr){
-  return new Date(dateStr).toISOString().split("T")[0];
+document.getElementById("filter").onchange=render;
+
+async function load(){
+  const r=await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"getAll"})});
+  const d=await r.json();
+  expenses=d.expenses;
+  balanceGPay.innerText="₹"+d.gpay;
+  balanceCash.innerText="₹"+d.cash;
+  render();
 }
 
-/* ---------- LOAD DATA ---------- */
-async function loadData(){
-  const res = await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"getAll"})});
-  const data = await res.json();
-
-  expensesData = data.expenses;
-
-  document.getElementById("balanceGPay").innerText = "₹"+data.gpay;
-  document.getElementById("balanceCash").innerText = "₹"+data.cash;
-
-  document.getElementById("filter").value="month";
-  applyFilter();
-}
-
-/* ---------- FILTER ---------- */
-function applyFilter(){
-  const filter = document.getElementById("filter").value;
-  const today = new Date();
-  let map={}, total=0;
-
-  expensesData.forEach(e=>{
-    const d = new Date(e.Date);
-    if(filter==="month" && (d.getMonth()!=today.getMonth() || d.getFullYear()!=today.getFullYear())) return;
-    if(filter==="week"){
-      const w = new Date(); w.setDate(w.getDate()-w.getDay());
-      if(d<w) return;
-    }
-    const key = formatYMD(e.Date);
-    map[key] = (map[key]||0)+Number(e.Amount);
-    total+=Number(e.Amount);
+function render(){
+  let m={},t=0,n=new Date(),filt=filter.value;
+  expenses.forEach(e=>{
+    let d=new Date(e.Date);
+    if(filt==="month"&&(d.getMonth()!=n.getMonth()||d.getFullYear()!=n.getFullYear()))return;
+    if(filt==="week"){let w=new Date();w.setDate(w.getDate()-w.getDay());if(d<w)return;}
+    let k=ymd(e.Date);
+    m[k]=(m[k]||0)+e.Amount; t+=e.Amount;
   });
-
-  document.getElementById("totalExpense").innerText="₹"+total.toFixed(2);
-
-  renderDateTable(map);
+  totalExpense.innerText="₹"+t;
+  expenseTable.innerHTML=Object.keys(m).sort((a,b)=>new Date(b)-new Date(a))
+    .map(d=>`<tr onclick="openDay('${d}')"><td>${f(d)}</td><td>₹${m[d]}</td></tr>`).join("");
 }
 
-/* ---------- DATE TABLE (DESC ORDER) ---------- */
-function renderDateTable(map){
-  const tbody = document.getElementById("expenseTable");
-  tbody.innerHTML="";
-
-  Object.keys(map)
-    .sort((a,b)=> new Date(b)-new Date(a))   // DESC
-    .forEach(d=>{
-      tbody.innerHTML+=`
-        <tr onclick="openDayDetail('${d}')">
-          <td>${formatDateDisplay(d)}</td>
-          <td>₹${map[d].toFixed(2)}</td>
-        </tr>`;
-    });
+function openDay(d){
+  detailDate.innerText=f(d);
+  detailBody.innerHTML=expenses.filter(e=>ymd(e.Date)===d)
+    .map(e=>`<tr><td>${e.Category==="Others"?e.Item:e.Category}</td><td>₹${e.Amount}</td><td>${e.PaymentMode}</td></tr>`).join("");
+  detailModal.style.display="flex";
 }
 
-/* ---------- DATE DETAIL ---------- */
-function openDayDetail(date){
-  document.getElementById("detailDate").innerText=formatDateDisplay(date);
-  const body=document.getElementById("detailBody");
-  body.innerHTML="";
+function openModal(){expenseModal.style.display="flex"}
+function closeModal(){expenseModal.style.display="none";temp=[];drawTemp()}
+function toggleOtherField(){product.style.display=category.value==="Others"?"block":"none"}
 
-  expensesData
-    .filter(e=>formatYMD(e.Date)===date)
-    .forEach(e=>{
-      const cat = e.Category==="Others" ? e.Item : e.Category;
-      body.innerHTML+=`
-        <tr>
-          <td>${cat}</td>
-          <td>₹${e.Amount}</td>
-          <td>${e.PaymentMode}</td>
-        </tr>`;
-    });
-
-  document.getElementById("detailModal").style.display="flex";
-}
-function closeDetail(){detailModal.style.display="none";}
-
-/* ---------- ADD EXPENSE (UNCHANGED) ---------- */
-function openModal(){expenseModal.style.display="flex";}
-function closeModal(){expenseModal.style.display="none"; tempItems=[]; renderTemp();}
-function toggleOtherField(){
-  product.style.display = category.value==="Others"?"block":"none";
-}
 function addItem(){
-  if(!amount.value||!date.value) return alert("Amount & date required");
-  tempItems.push({
-    category:category.value,
-    item:product.value||"-",
-    amount:amount.value,
-    payment:payment.value,
-    date:date.value
-  });
-  renderTemp();
+  if(!amount.value||!date.value)return alert("Required");
+  temp.push({category:category.value,item:product.value||"-",amount:amount.value,payment:payment.value,date:date.value});
+  drawTemp();
 }
-function renderTemp(){
-  tempTable.querySelector("tbody").innerHTML=tempItems.map((i,idx)=>`
-    <tr>
-      <td>${i.category}</td>
-      <td>${i.item}</td>
-      <td>₹${i.amount}</td>
-      <td>${i.payment}</td>
-      <td>${i.date}</td>
-      <td><button onclick="tempItems.splice(${idx},1);renderTemp()">❌</button></td>
-    </tr>`).join("");
+function drawTemp(){
+  tempBody.innerHTML=temp.map((i,x)=>`<tr><td>${i.category}</td><td>${i.item}</td><td>${i.amount}</td><td>${i.payment}</td><td><button onclick="temp.splice(${x},1);drawTemp()">❌</button></td></tr>`).join("");
 }
 async function submitAll(){
-  for(const i of tempItems){
-    await fetch(apiUrl,{method:"POST",body:new URLSearchParams({
-      action:"add",
-      date:i.date,
-      category:i.category,
-      item:i.item,
-      amount:i.amount,
-      paymentMode:i.payment
-    })});
+  for(let i of temp){
+    await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"add",...i})});
   }
-  closeModal(); loadData();
+  closeModal(); load();
 }
 
-/* ---------- BALANCE ---------- */
-function editBalance(t){
-  editingType=t;
-  balanceType.innerText="Update "+t;
-  balanceModal.style.display="flex";
-}
+function editBalance(t){editType=t;balanceType.innerText="Update "+t;balanceModal.style.display="flex"}
 async function saveBalance(){
-  await fetch(apiUrl,{method:"POST",body:new URLSearchParams({
-    action:"updateBalance",
-    type:editingType,
-    value:newBalance.value
-  })});
-  balanceModal.style.display="none";
-  loadData();
+  await fetch(apiUrl,{method:"POST",body:new URLSearchParams({action:"updateBalance",type:editType,value:newBalance.value})});
+  balanceModal.style.display="none"; load();
 }
-function closeBalanceModal(){balanceModal.style.display="none";}
 
-document.addEventListener("DOMContentLoaded",loadData);
+load();
 </script>
-
 </body>
 </html>
