@@ -114,7 +114,10 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer}
 const apiUrl="https://script.google.com/macros/s/AKfycbxG5iEm88BYbY44RE4IRffi0-I0uADDfAYN0jpEOPPpByvLL4eWflUVKyLAolRmWDTg/exec";
 let expenses=[],temp=[],editType="";
 
-const f=(d)=>{d=new Date(d);return `${d.getDate().toString().padStart(2,'0')}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getFullYear()}`;}
+const f = (d) => {
+  const [y, m, day] = d.split("-");
+  return `${day}-${m}-${y}`;
+};
 const ymd=d=>new Date(d).toISOString().split("T")[0];
 
 document.getElementById("filter").onchange=render;
