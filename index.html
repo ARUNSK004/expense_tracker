@@ -5,237 +5,1311 @@
 <title>Daily Expense Tracker</title>
 
 <style>
-body{font-family:Arial;margin:0;background:#f5f6fa}
-header{background:#6200ea;color:#fff;padding:15px;text-align:center}
-.dashboard{display:flex;gap:10px;padding:10px;flex-wrap:wrap}
-.card{background:#fff;flex:1;padding:10px;border-radius:10px;text-align:center}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ddd;padding:8px;text-align:center}
-th{background:#eee}
-.add-btn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;
-border-radius:50%;font-size:30px;border:none;background:#6200ea;color:#fff}
 
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
-justify-content:center;align-items:center}
-.modal-content{background:#fff;width:90%;max-width:400px;
-max-height:85%;overflow:auto;padding:15px;border-radius:10px}
-input,select{width:100%;padding:8px;margin:5px 0}
-button{padding:8px;border:none;border-radius:6px;cursor:pointer}
+body{
+  font-family:Arial,sans-serif;
+  margin:0;
+  background:#f5f6fa;
+}
+
+header{
+  background:#6200ea;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+}
+
+.dashboard{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  flex-wrap:wrap;
+}
+
+.card{
+  background:#fff;
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  border:1px solid #ddd;
+  padding:8px;
+  text-align:center;
+}
+
+th{
+  background:#eee;
+}
+
+.add-btn{
+  position:fixed;
+  right:20px;
+  bottom:20px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  font-size:30px;
+  border:none;
+  background:#6200ea;
+  color:#fff;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:#fff;
+  width:90%;
+  max-width:400px;
+  max-height:85%;
+  overflow:auto;
+  padding:15px;
+  border-radius:10px;
+}
+
+input,select{
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+  box-sizing:border-box;
+}
+
+button{
+  padding:8px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* Range filter */
+
+.date-range{
+  display:none;
+  margin-top:8px;
+}
+
+.date-range label{
+  display:block;
+  text-align:left;
+  font-size:13px;
+  margin-top:5px;
+}
+
+/* Submit button */
+
+#submitBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:110px;
+}
+
+#submitBtn:disabled{
+  opacity:.7;
+  cursor:not-allowed;
+}
+
+/* Loading spinner */
+
+.spinner{
+  width:16px;
+  height:16px;
+  border:3px solid rgba(255,255,255,.4);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+
+/* Category cards */
+
+.category-section{
+  padding:10px;
+}
+
+.category-section h3{
+  margin:5px 0 10px;
+}
+
+#categoryCards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;
+}
+
+.category-card{
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+
+.category-card h4{
+  margin:0 0 8px;
+  font-size:15px;
+}
+
+.category-card p{
+  margin:0;
+  font-size:18px;
+  font-weight:bold;
+}
+
+@keyframes spin{
+
+  to{
+    transform:rotate(360deg);
+  }
+
+}
+
 </style>
 </head>
 
 <body>
+
 <header>💰 Daily Expense Tracker</header>
 
+
+<!-- DASHBOARD -->
+
 <div class="dashboard">
+
   <div class="card">
+
     <h3>Total</h3>
+
     <select id="filter">
       <option value="month">Month</option>
-      <option value="week">Week</option>
       <option value="all">All Time</option>
+      <option value="range">Date Range</option>
     </select>
+
+    <div class="date-range" id="dateRange">
+
+      <label>From Date</label>
+      <input type="date" id="fromDate">
+
+      <label>To Date</label>
+      <input type="date" id="toDate">
+
+    </div>
+
     <p id="totalExpense">₹0</p>
+
   </div>
 
-  <div class="card">
-    <h3>GPay</h3>
-    <p id="balanceGPay">₹0</p>
-    <button onclick="editBalance('GPay')">Edit</button>
-  </div>
-
-  <div class="card">
-    <h3>Cash</h3>
-    <p id="balanceCash">₹0</p>
-    <button onclick="editBalance('Cash')">Edit</button>
-  </div>
 </div>
 
+
+<!-- CATEGORY SPENDING -->
+
+<div class="category-section">
+
+  <h3>Spending by Category</h3>
+
+  <div id="categoryCards"></div>
+
+</div>
+
+
+<!-- DAILY EXPENSE TABLE -->
+
 <table>
-<thead>
-<tr><th>Date</th><th>Total</th></tr>
-</thead>
-<tbody id="expenseTable"></tbody>
+
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+
+  <tbody id="expenseTable"></tbody>
+
 </table>
+
+
+<!-- ADD BUTTON -->
 
 <button class="add-btn" onclick="openModal()">+</button>
 
+
 <!-- ADD EXPENSE MODAL -->
+
 <div class="modal" id="expenseModal">
-<div class="modal-content">
-<h3>Add Expense</h3>
 
-<select id="category" onchange="toggleOtherField()">
-<option>Breakfast</option>
-<option>Lunch</option>
-<option>Dinner</option>
-<option>Snacks</option>
-<option>Others</option>
-</select>
+  <div class="modal-content">
 
-<input id="product" placeholder="Item name" style="display:none">
-<input id="amount" type="number" placeholder="Amount">
-<select id="payment"><option>GPay</option><option>Cash</option></select>
-<input id="date" type="date">
+    <h3>Add Expense</h3>
 
-<button onclick="addItem()">Add Item</button>
+    <select id="category">
+      <option>Breakfast</option>
+      <option>Lunch</option>
+      <option>Dinner</option>
+      <option>Snacks</option>
+      <option>Travel</option>
+      <option>Grocery</option>
+      <option>Housing</option>
+      <option>Others</option>
+    </select>
 
-<table>
-<thead><tr><th>Cat</th><th>Item</th><th>Amt</th><th>Pay</th><th></th></tr></thead>
-<tbody id="tempBody"></tbody>
-</table>
+    <input
+      id="product"
+      placeholder="Item name"
+      style="display:none"
+    >
 
-<button onclick="submitAll()">Submit All</button>
-<button onclick="closeModal()">Cancel</button>
+    <input
+      id="amount"
+      type="number"
+      placeholder="Amount"
+      min="0"
+    >
+
+    <select id="payment">
+      <option>GPay</option>
+      <option>Cash</option>
+    </select>
+
+    <input id="date" type="date">
+
+    <button onclick="addItem()">
+      Add Item
+    </button>
+
+
+    <!-- TEMPORARY ITEMS -->
+
+    <table>
+
+      <thead>
+
+        <tr>
+          <th>Cat</th>
+          <th>Item</th>
+          <th>Amt</th>
+          <th>Pay</th>
+          <th></th>
+        </tr>
+
+      </thead>
+
+      <tbody id="tempBody"></tbody>
+
+    </table>
+
+
+    <button id="submitBtn" onclick="submitAll()">
+      Submit All
+    </button>
+
+    <button onclick="closeModal()">
+      Cancel
+    </button>
+
+  </div>
+
 </div>
-</div>
+
 
 <!-- DAY DETAILS -->
+
 <div class="modal" id="detailModal">
-<div class="modal-content">
-<h3 id="detailDate"></h3>
-<table>
-<thead><tr><th>Category</th><th>Amount</th><th>Pay</th></tr></thead>
-<tbody id="detailBody"></tbody>
-</table>
-<button onclick="detailModal.style.display='none'">Close</button>
-</div>
+
+  <div class="modal-content">
+
+    <h3 id="detailDate"></h3>
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Pay</th>
+        </tr>
+      </thead>
+
+      <tbody id="detailBody"></tbody>
+
+    </table>
+
+    <button onclick="closeDetailModal()">
+      Close
+    </button>
+
+  </div>
+
 </div>
 
-<!-- BALANCE MODAL -->
-<div class="modal" id="balanceModal">
-<div class="modal-content">
-<h3 id="balanceType"></h3>
-<input id="newBalance" type="number">
-<button onclick="saveBalance()">Save</button>
-<button onclick="balanceModal.style.display='none'">Cancel</button>
+<!-- CATEGORY DETAILS -->
+
+<div class="modal" id="categoryModal">
+
+  <div class="modal-content">
+
+    <h3 id="categoryTitle"></h3>
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Item</th>
+          <th>Amount</th>
+          <th>Payment</th>
+        </tr>
+      </thead>
+
+      <tbody id="categoryDetailBody"></tbody>
+
+    </table>
+
+    <button onclick="closeCategoryModal()">
+      Close
+    </button>
+
+  </div>
+
 </div>
-</div>
+
 
 <script>
-const apiUrl = "https://script.google.com/macros/s/AKfycbyuhrLpZfARylKhsSoGoLl7H6Pj3MjMLKdW3OIiXRvQc9cIyLXW4dshqnjOg4H5tOLT/exec";
-let expenses=[], temp=[], editType="";
 
-const formatDate = d => {
-  const [y,m,day] = d.split("-");
+const apiUrl =
+"https://script.google.com/macros/s/AKfycbzzpE5EJHy5DsEgAucYbJQ_ej24v9dq0mLVaJ1lbIcFFpADQW7tufxUTneR7QnSEiB5/exec";
+
+
+let expenses = [];
+let temp = [];
+
+
+/* ---------------- ELEMENT REFERENCES ---------------- */
+
+const filter = document.getElementById("filter");
+const dateRange = document.getElementById("dateRange");
+const fromDate = document.getElementById("fromDate");
+const toDate = document.getElementById("toDate");
+
+const totalExpense = document.getElementById("totalExpense");
+const expenseTable = document.getElementById("expenseTable");
+const categoryCards = document.getElementById("categoryCards");
+const categoryModal =  document.getElementById("categoryModal");
+const categoryTitle =  document.getElementById("categoryTitle");
+const categoryDetailBody =  document.getElementById("categoryDetailBody");
+const expenseModal = document.getElementById("expenseModal");
+const detailModal = document.getElementById("detailModal");
+
+const category = document.getElementById("category");
+const product = document.getElementById("product");
+const amount = document.getElementById("amount");
+const payment = document.getElementById("payment");
+const date = document.getElementById("date");
+
+const tempBody = document.getElementById("tempBody");
+
+const detailDate = document.getElementById("detailDate");
+const detailBody = document.getElementById("detailBody");
+
+const submitBtn = document.getElementById("submitBtn");
+
+
+/* ---------------- DATE FORMAT ---------------- */
+
+function formatDate(d){
+
+  if(!d){
+    return "";
+  }
+
+  const parts = d.split("-");
+
+  if(parts.length !== 3){
+    return d;
+  }
+
+  const [y,m,day] = parts;
+
   return `${day}-${m}-${y}`;
-};
+}
 
-document.getElementById("filter").onchange = render;
+
+/* ---------------- TODAY DATE ---------------- */
+
+function getToday(){
+
+  const today = new Date();
+
+  const year = today.getFullYear();
+
+  const month =
+    String(today.getMonth() + 1).padStart(2,"0");
+
+  const day =
+    String(today.getDate()).padStart(2,"0");
+
+  return `${year}-${month}-${day}`;
+}
+
+
+/* ---------------- LOAD DATA ---------------- */
 
 async function load(){
-  const r = await fetch(apiUrl,{
-    method:"POST",
-    body:new URLSearchParams({action:"getAll"})
-  });
-  const d = await r.json();
-  expenses = d.expenses;
-  balanceGPay.innerText="₹"+d.gpay;
-  balanceCash.innerText="₹"+d.cash;
-  render();
+
+  try{
+
+    const response = await fetch(apiUrl,{
+
+      method:"POST",
+
+      body:new URLSearchParams({
+        action:"getAll"
+      })
+
+    });
+
+
+    if(!response.ok){
+
+      throw new Error(
+        "Server returned HTTP " + response.status
+      );
+
+    }
+
+
+    const data = await response.json();
+
+
+    if(data.status === "error"){
+
+      throw new Error(
+        data.message || "Apps Script returned an error"
+      );
+
+    }
+
+
+    expenses =
+      Array.isArray(data.expenses)
+        ? data.expenses
+        : [];
+
+
+    render();
+
+
+  }catch(error){
+
+    console.error("Load error:",error);
+
+    alert(
+      "Unable to load expenses.\n\n" +
+      error.message
+    );
+
+  }
+
 }
+
+
+/* ---------------- FILTER CHANGE ---------------- */
+
+filter.addEventListener("change",function(){
+
+  if(filter.value === "range"){
+
+    dateRange.style.display = "block";
+
+  }else{
+
+    dateRange.style.display = "none";
+
+    fromDate.value = "";
+    toDate.value = "";
+
+  }
+
+  render();
+
+});
+
+
+fromDate.addEventListener("change",render);
+toDate.addEventListener("change",render);
+
+
+function escapeJs(value){
+
+  return String(value)
+    .replace(/\\/g,"\\\\")
+    .replace(/'/g,"\\'")
+    .replace(/"/g,'\\"')
+    .replace(/\n/g,"\\n")
+    .replace(/\r/g,"\\r");
+
+}
+
+/* ---------------- RENDER ---------------- */
 
 function render(){
-  let map={}, total=0;
-  let now = new Date();
-  let filt = filter.value;
 
-  expenses.forEach(e=>{
-    const d = e.Date; // STRING yyyy-mm-dd
+  const map = {};
+  const categoryTotals = {};
 
-    if(filt==="month"){
-      if(d.slice(0,7)!==now.toISOString().slice(0,7)) return;
+  let total = 0;
+
+  const now = new Date();
+
+  const selectedFilter = filter.value;
+
+  const selectedFrom = fromDate.value;
+  const selectedTo = toDate.value;
+
+
+  expenses.forEach(function(e){
+
+    const d = String(e.Date || "");
+
+    if(!d){
+      return;
     }
-    if(filt==="week"){
-      const today = now.toISOString().slice(0,10);
-      if(d < today) return;
+
+
+    /* MONTH FILTER */
+
+    if(selectedFilter === "month"){
+
+      const currentMonth =
+        now.getFullYear() +
+        "-" +
+        String(now.getMonth() + 1).padStart(2,"0");
+
+
+      if(d.slice(0,7) !== currentMonth){
+        return;
+      }
+
     }
 
-    map[d]=(map[d]||0)+e.Amount;
-    total+=e.Amount;
+
+    /* DATE RANGE FILTER */
+
+    if(selectedFilter === "range"){
+
+      if(selectedFrom && d < selectedFrom){
+        return;
+      }
+
+      if(selectedTo && d > selectedTo){
+        return;
+      }
+
+    }
+
+
+    const expenseAmount =
+      Number(e.Amount) || 0;
+
+
+    /* DAILY TOTAL */
+
+    map[d] =
+      (map[d] || 0) +
+      expenseAmount;
+
+
+    total += expenseAmount;
+
+
+    /* MAIN CATEGORY */
+
+const mainCategory = String(e.MainCategory || "").trim();
+
+if (mainCategory) {
+  categoryTotals[mainCategory] =
+    (categoryTotals[mainCategory] || 0) + expenseAmount;
+}
+
   });
 
-  totalExpense.innerText="₹"+total;
 
-  expenseTable.innerHTML = Object.keys(map)
-    .sort((a,b)=>b.localeCompare(a))   // ✅ DESCENDING
-    .map(d=>`
-      <tr onclick="openDay('${d}')">
-        <td>${formatDate(d)}</td>
-        <td>₹${map[d]}</td>
-      </tr>`).join("");
-}
+  /* TOTAL */
 
-function openDay(d){
-  detailDate.innerText = formatDate(d);
-  detailBody.innerHTML = expenses
-    .filter(e=>e.Date===d)
-    .map(e=>`
+  totalExpense.innerText =
+    "₹" + total.toLocaleString("en-IN");
+
+
+  /* DAILY TABLE */
+
+  const dates = Object.keys(map)
+    .sort((a,b) => b.localeCompare(a));
+
+
+  if(dates.length === 0){
+
+    expenseTable.innerHTML = `
       <tr>
-        <td>${e.Category==="Others"?e.Item:e.Category}</td>
-        <td>₹${e.Amount}</td>
-        <td>${e.PaymentMode}</td>
-      </tr>`).join("");
-  detailModal.style.display="flex";
+        <td colspan="2">No expenses found</td>
+      </tr>
+    `;
+
+  }else{
+
+    expenseTable.innerHTML =
+      dates.map(function(d){
+
+        return `
+
+          <tr onclick="openDay('${d}')">
+
+            <td>${formatDate(d)}</td>
+
+            <td>
+              ₹${map[d].toLocaleString("en-IN")}
+            </td>
+
+          </tr>
+
+        `;
+
+      }).join("");
+
+  }
+
+
+  /* CATEGORY CARDS */
+
+  const categories =
+  Object.keys(categoryTotals)
+    .sort(function(a,b){
+      return categoryTotals[b] - categoryTotals[a];
+    });
+
+
+if(categories.length === 0){
+
+  categoryCards.innerHTML = `
+    <div class="category-card">
+      <h4>No Data</h4>
+      <p>₹0</p>
+    </div>
+  `;
+
+}else{
+
+  categoryCards.innerHTML =
+    categories.map(function(mainCategory){
+
+      return `
+
+        <div
+          class="category-card"
+          onclick="openCategory('${escapeJs(mainCategory)}')"
+        >
+
+          <h4>${escapeHtml(mainCategory)}</h4>
+
+          <p>
+            ₹${categoryTotals[mainCategory]
+                .toLocaleString("en-IN")}
+          </p>
+
+        </div>
+
+      `;
+
+    }).join("");
+
 }
 
-function openModal(){expenseModal.style.display="flex"}
-function closeModal(){expenseModal.style.display="none";temp=[];drawTemp()}
-function toggleOtherField(){product.style.display=category.value==="Others"?"block":"none"}
+}
+
+function closeCategoryModal(){
+
+  categoryModal.style.display = "none";
+
+}
+
+/* ---------------- DAY DETAILS ---------------- */
+
+function openDay(selectedDate){
+
+  detailDate.innerText =
+    formatDate(selectedDate);
+
+
+  const dayExpenses =
+    expenses.filter(function(e){
+
+      return String(e.Date) === selectedDate;
+
+    });
+
+
+  detailBody.innerHTML =
+    dayExpenses.map(function(e){
+
+      const displayCategory =
+        e.Category === "Others"
+          ? e.Item
+          : e.Category;
+
+
+      return `
+
+        <tr>
+
+          <td>
+            ${escapeHtml(displayCategory || "-")}
+          </td>
+
+          <td>
+            ₹${(Number(e.Amount) || 0)
+                .toLocaleString("en-IN")}
+          </td>
+
+          <td>
+            ${escapeHtml(e.PaymentMode || "-")}
+          </td>
+
+        </tr>
+
+      `;
+
+    }).join("");
+
+
+  detailModal.style.display = "flex";
+
+}
+
+
+function closeDetailModal(){
+
+  detailModal.style.display = "none";
+
+}
+
+
+/* ---------------- EXPENSE MODAL ---------------- */
+
+function openModal(){
+
+  // Default date = today
+  date.value = getToday();
+
+  // Reset entry fields
+  amount.value = "";
+
+  product.value = "";
+
+  category.value = "Breakfast";
+
+  payment.value = "GPay";
+
+  product.style.display = "none";
+
+
+  expenseModal.style.display = "flex";
+
+}
+
+
+function closeModal(){
+
+  expenseModal.style.display = "none";
+
+  temp = [];
+
+  drawTemp();
+
+
+  amount.value = "";
+  product.value = "";
+
+  category.value = "Breakfast";
+  payment.value = "GPay";
+
+  product.style.display = "none";
+
+  date.value = "";
+
+}
+
+
+/* ---------------- OTHERS CATEGORY ---------------- */
+
+category.addEventListener("change",toggleOtherField);
+
+
+function toggleOtherField(){
+
+  if(category.value === "Others"){
+
+    product.style.display = "block";
+
+    product.focus();
+
+  }else{
+
+    product.style.display = "none";
+
+    product.value = "";
+
+  }
+
+}
+
+function openCategory(mainCategory){
+
+  categoryTitle.innerText =
+    mainCategory + " Spending";
+
+
+  const selectedFilter =
+    filter.value;
+
+  const selectedFrom =
+    fromDate.value;
+
+  const selectedTo =
+    toDate.value;
+
+
+  const now =
+    new Date();
+
+
+  const currentMonth =
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2,"0");
+
+
+  const categoryExpenses =
+    expenses.filter(function(e){
+
+      /* MAIN CATEGORY MATCH */
+
+      const expenseMainCategory =
+        String(e.MainCategory || "").trim();
+
+
+      if(
+        expenseMainCategory.toLowerCase() !==
+        mainCategory.toLowerCase()
+      ){
+        return false;
+      }
+
+
+      const d =
+        String(e.Date || "");
+
+
+      /* MONTH FILTER */
+
+      if(selectedFilter === "month"){
+
+        if(d.slice(0,7) !== currentMonth){
+
+          return false;
+
+        }
+
+      }
+
+
+      /* DATE RANGE FILTER */
+
+      if(selectedFilter === "range"){
+
+        if(
+          selectedFrom &&
+          d < selectedFrom
+        ){
+
+          return false;
+
+        }
+
+
+        if(
+          selectedTo &&
+          d > selectedTo
+        ){
+
+          return false;
+
+        }
+
+      }
+
+
+      return true;
+
+    })
+    .sort(function(a,b){
+
+      return String(b.Date)
+        .localeCompare(String(a.Date));
+
+    });
+
+
+  if(categoryExpenses.length === 0){
+
+    categoryDetailBody.innerHTML = `
+      <tr>
+        <td colspan="5">
+          No expenses found
+        </td>
+      </tr>
+    `;
+
+  }else{
+
+    categoryDetailBody.innerHTML =
+      categoryExpenses.map(function(e){
+
+        /*
+          For Others:
+          show the actual item name.
+
+          For other categories:
+          Item remains "-"
+        */
+
+        const itemName =
+          e.Category === "Others"
+            ? (e.Item || "-")
+            : "-";
+
+
+        return `
+
+          <tr>
+
+            <td>
+              ${formatDate(e.Date)}
+            </td>
+
+            <td>
+              ${escapeHtml(e.Category || "-")}
+            </td>
+
+            <td>
+              ${escapeHtml(itemName)}
+            </td>
+
+            <td>
+              ₹${(Number(e.Amount) || 0)
+                .toLocaleString("en-IN")}
+            </td>
+
+            <td>
+              ${escapeHtml(e.PaymentMode || "-")}
+            </td>
+
+          </tr>
+
+        `;
+
+      }).join("");
+
+  }
+
+
+  categoryModal.style.display =
+    "flex";
+
+}
+
+
+/* ---------------- ADD TEMP ITEM ---------------- */
 
 function addItem(){
-  if(!amount.value||!date.value) return alert("Required");
+
+  const expenseAmount =
+    Number(amount.value);
+
+
+  if(!date.value){
+
+    alert("Please select a date.");
+    return;
+
+  }
+
+
+  if(!expenseAmount || expenseAmount <= 0){
+
+    alert("Please enter a valid amount.");
+    return;
+
+  }
+
+
+  if(
+    category.value === "Others" &&
+    !product.value.trim()
+  ){
+
+    alert("Please enter item name.");
+    product.focus();
+    return;
+
+  }
+
+
   temp.push({
+
     category:category.value,
-    item:product.value||"-",
-    amount:Number(amount.value),
+
+    item:
+      category.value === "Others"
+        ? product.value.trim()
+        : "-",
+
+    amount:expenseAmount,
+
     payment:payment.value,
+
     date:date.value
+
   });
+
+
   drawTemp();
+
+
+  // Clear amount
+  amount.value = "";
+
+
+  // Item is always cleared after adding
+  product.value = "";
+
+
+  // Hide item field for next entry
+  if(category.value !== "Others"){
+
+    product.style.display = "none";
+
+  }
+
 }
+
+
+/* ---------------- TEMP TABLE ---------------- */
 
 function drawTemp(){
-  tempBody.innerHTML=temp.map((i,x)=>`
-    <tr>
-      <td>${i.category}</td>
-      <td>${i.item}</td>
-      <td>${i.amount}</td>
-      <td>${i.payment}</td>
-      <td><button onclick="temp.splice(${x},1);drawTemp()">❌</button></td>
-    </tr>`).join("");
+
+  if(temp.length === 0){
+
+    tempBody.innerHTML = "";
+
+    return;
+
+  }
+
+
+  tempBody.innerHTML =
+    temp.map(function(item,index){
+
+      return `
+
+        <tr>
+
+          <td>${escapeHtml(item.category)}</td>
+
+          <td>${escapeHtml(item.item)}</td>
+
+          <td>
+            ₹${item.amount.toLocaleString("en-IN")}
+          </td>
+
+          <td>${escapeHtml(item.payment)}</td>
+
+          <td>
+
+            <button
+              type="button"
+              onclick="removeTempItem(${index})"
+            >
+              ❌
+            </button>
+
+          </td>
+
+        </tr>
+
+      `;
+
+    }).join("");
+
 }
+
+
+function removeTempItem(index){
+
+  temp.splice(index,1);
+
+  drawTemp();
+
+}
+
+
+/* ---------------- SUBMIT ALL ---------------- */
 
 async function submitAll(){
-  for(let i of temp){
-    await fetch(apiUrl,{
-      method:"POST",
-      body:new URLSearchParams({action:"add",...i})
-    });
+
+  if(temp.length === 0){
+
+    alert("Add at least one item.");
+
+    return;
+
   }
-  closeModal(); load();
+
+
+  const originalText =
+    submitBtn.innerHTML;
+
+
+  submitBtn.disabled = true;
+
+  submitBtn.innerHTML =
+    '<span class="spinner"></span> Saving...';
+
+
+  try{
+
+    for(const item of temp){
+
+      const response = await fetch(apiUrl,{
+
+        method:"POST",
+
+        body:new URLSearchParams({
+
+          action:"add",
+
+          category:item.category,
+
+          item:item.item,
+
+          amount:item.amount,
+
+          payment:item.payment,
+
+          date:item.date
+
+        })
+
+      });
+
+
+      if(!response.ok){
+
+        throw new Error(
+          "HTTP " + response.status
+        );
+
+      }
+
+
+      const result =
+        await response.json();
+
+
+      if(result.status !== "ok"){
+
+        throw new Error(
+          result.message ||
+          "Google Sheet did not confirm the save."
+        );
+
+      }
+
+    }
+
+
+    submitBtn.innerHTML = "✅ Saved";
+
+
+    await load();
+
+
+    setTimeout(function(){
+
+      closeModal();
+
+      submitBtn.disabled = false;
+
+      submitBtn.innerHTML =
+        originalText;
+
+    },500);
+
+
+  }catch(error){
+
+    console.error("Save error:",error);
+
+    alert(
+      "Unable to save the expense.\n\n" +
+      error.message
+    );
+
+
+    submitBtn.disabled = false;
+
+    submitBtn.innerHTML =
+      originalText;
+
+  }
+
 }
 
-function editBalance(t){
-  editType=t;
-  balanceType.innerText="Update "+t;
-  balanceModal.style.display="flex";
+
+/* ---------------- HTML ESCAPE ---------------- */
+
+function escapeHtml(value){
+
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
 }
 
-async function saveBalance(){
-  await fetch(apiUrl,{
-    method:"POST",
-    body:new URLSearchParams({
-      action:"updateBalance",
-      type:editType,
-      value:newBalance.value
-    })
-  });
-  balanceModal.style.display="none";
-  load();
-}
+
+/* ---------------- INITIAL LOAD ---------------- */
 
 load();
+
 </script>
+
 </body>
 </html>
