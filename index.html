@@ -258,7 +258,7 @@ button{
 
     <h3>Add Expense</h3>
 
-    <select id="category">
+    <select id="category" onchange="toggleOtherField()">
       <option>Breakfast</option>
       <option>Lunch</option>
       <option>Dinner</option>
@@ -825,7 +825,7 @@ function openModal(){
 
   payment.value = "GPay";
 
-  product.style.display = "none";
+  toggleOtherField();
 
 
   expenseModal.style.display = "flex";
@@ -857,7 +857,6 @@ function closeModal(){
 
 /* ---------------- OTHERS CATEGORY ---------------- */
 
-category.addEventListener("change",toggleOtherField);
 
 
 function toggleOtherField(){
