@@ -1048,73 +1048,51 @@ function openCategory(mainCategory){
 
 function addItem(){
 
-  const expenseAmount =
-    Number(amount.value);
-
-
-  if(!date.value){
-
-    alert("Please select a date.");
-    return;
-
+  if(!amount.value || !date.value){
+    return alert("Required");
   }
 
+  const noItemCategories = [
+    "Breakfast",
+    "Lunch",
+    "Dinner",
+    "Snacks"
+  ];
 
-  if(!expenseAmount || expenseAmount <= 0){
+  const needsItem =
+    !noItemCategories.includes(category.value);
 
-    alert("Please enter a valid amount.");
-    return;
+  const itemValue =
+    needsItem
+      ? product.value.trim()
+      : "-";
 
+  if(needsItem && !itemValue){
+    return alert("Please enter item name");
   }
-
-
-  if(
-    category.value === "Others" &&
-    !product.value.trim()
-  ){
-
-    alert("Please enter item name.");
-    product.focus();
-    return;
-
-  }
-
 
   temp.push({
 
-    category:category.value,
+    category: category.value,
 
-    item:
-      category.value === "Others"
-        ? product.value.trim()
-        : "-",
+    item: itemValue,
 
-    amount:expenseAmount,
+    amount: Number(amount.value),
 
-    payment:payment.value,
+    payment: payment.value,
 
-    date:date.value
+    date: date.value
 
   });
 
-
   drawTemp();
 
-
-  // Clear amount
-  amount.value = "";
-
-
-  // Item is always cleared after adding
+  /*
+   * Clear item after adding.
+   * This prevents the previous item's value
+   * from appearing in the next entry.
+   */
   product.value = "";
-
-
-  // Hide item field for next entry
-  if(category.value !== "Others"){
-
-    product.style.display = "none";
-
-  }
 
 }
 
