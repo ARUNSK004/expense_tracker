@@ -1,5 +1,5 @@
 
-name: Deploy static HTML to GitHub Pages
+name: Deploy Expense Tracker to GitHub Pages
 
 on:
   push:
@@ -18,6 +18,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -28,7 +31,7 @@ jobs:
           APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
         run: |
           test -n "$APPS_SCRIPT_URL" || {
-            echo "Missing APPS_SCRIPT_URL secret"
+            echo "APPS_SCRIPT_URL secret is missing"
             exit 1
           }
 
@@ -43,22 +46,28 @@ jobs:
 
           if html.count(placeholder) != 1:
               raise SystemExit(
-                  "Expected exactly one Apps Script URL placeholder"
+                  "Expected exactly one URL placeholder"
               )
 
           if not url.startswith(
               "https://script.google.com/macros/s/"
           ) or not url.endswith("/exec"):
-              raise SystemExit("Invalid Apps Script Web App URL")
+              raise SystemExit("Invalid Apps Script URL")
 
-          html = html.replace(placeholder, url)
-          file.write_text(html, encoding="utf-8")
+          file.write_text(
+              html.replace(placeholder, url),
+              encoding="utf-8"
+          )
           PY
 
-      - name: Upload static files
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy site
+        id: deployment
         uses: actions/deploy-pages@v4
